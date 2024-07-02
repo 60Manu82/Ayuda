@@ -179,7 +179,7 @@ export { getAll, getDetail, getRestaurantCategories, create, remove, update, pro
 
 
 
-Añadir lo siguiente a `RestaurantEndpoints` que está en el frontend, en la carpeta `api`
+Añadir lo siguiente a `CreateRestaurant` que está en el frontend, en la carpeta `screens/restaurants`
 
 ```JSX
 <TextRegular>Is it promoted?</TextRegular>
