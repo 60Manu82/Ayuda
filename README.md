@@ -1,58 +1,44 @@
-# Introduction
+# 1. Promocionar un restaurante
 
-During this lab we will learn how to:
+Añadir lo siguiente a `RestaurantsController` que está en el backend, en la carpeta `controllers`
 
-- modify screens to include action buttons for editing and deleting data
-- modify screens to perform delete actions on entities.
-- create screens and forms for editing entities data.
+```JSX
+import { Sequelize } from 'sequelize'
 
-We will learn how to perform an HTTP DELETE requests from the Frontend client to the backend server. It is important to remember that to performn a DELETE Request we will need:
 
-- the URI where we will address the request,
-- the id of the entity to be removed.
+const promote = async function (req, res) {
+  try {
+    const restaurant = await Restaurant.findByPk(req.params.restaurantId)
+    const otherPromotedRestaurant = await Restaurant.findOne({
+      where: {
+        promoted: true,
+        id: { [Sequelize.Op.ne]: restaurant.id }
+      }
+    })
+    if (otherPromotedRestaurant) {
+      otherPromotedRestaurant.promoted = false
+      await otherPromotedRestaurant.save()
+    }
+    restaurant.promoted = true
+    const updatedRestaurant = await restaurant.save()
+    res.json(updatedRestaurant)
+  } catch (err) {
+    res.status(500).send(err)
+  }
+}
 
-For instance, if we want to remove a restaurant, we will do an HTTP DELETE Request to: `/restaurants/:restaurantId`.
 
-We will learn how to perform an HTTP PUT requests from the Frontend client to the backend server. It is important to remember that to performn a PUT Request we will need:
 
-- the URI where we will address the request,
-- the id of the entity to be edited, and
-- the updated entity data.
-
-For instance, if we want to edit some restaurant, we will do an HTTP PUT Request to: `/restaurants/:restaurantId` and we will have to provide the updated restaurant data.
-
-## 0. Setup
-
-Click on "Use this template" in GitHub and "Create a new repository" to create your own repository based on this template. Afterwards, clone your own repository by opening VScode and clone the previously created repository by opening Command Palette (Ctrl+Shift+P or F1) and `Git clone` this repository, or using the terminal and running
-
-```PowerShell
-git clone <url>
+const RestaurantController = {
+  index,
+  indexOwner,
+  create,
+  show,
+  update,
+  destroy,
+  promote
+}
 ```
-
-Alternatively, you can use the _Source Control_ button in the left-sided bar and click on _Clone Repository_ button.
-
-In case you are asked if you trust the author, please select yes.
-
-It may be necessary to setup your git username by running the following commands on your terminal, in order to be able to commit and push:
-
-```PowerShell
-git config --global user.name "FIRST_NAME LAST_NAME"
-git config --global user.email "MY_NAME@example.com"
-```
-
-As in previous labs, it is needed to create a copy of the `.env.example` file, name it `.env` and include your environment variables.
-
-Open a terminal a run `npm run install:all:bash` (`npm run install:all:win` for Windows OS) to install dependencies. A folder `node_modules` will be created under the `DeliverUS-Backend` and `DeliverUS-Frontend` folders.
-
-Once you should setup your .env file for DeliverUS-Backend project. API_BASE_URL must points to your server. For instance `API_BASE_URL=http://localhost:3000`.
-
-You have to run the backend server as well. Go to your global project folder and run `start:backend`.
-
-You can then run `start:frontend`. Check that the base project is working.
-
-# 1. Action buttons for editing and removing Restaurants.
-
-We need to include some actions for editing and removing restaurants. One possible implementation is to include `Pressable` components in the card that renders each restaurant in the `RestaurantsScreen`.
 
 To this end you can include the following `Pressable` instances in the renderRestaurant function of `RestaurantScreen`:
 
