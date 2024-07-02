@@ -276,8 +276,31 @@ const promoteRestaurant = async (restaurant) => {
   }
 ```
 
-Todo esto dentro de `RestaurantRoute` que está en el backend, en la carpeta `routes` dentro de la funcion:
+
+
+
+Todo esto dentro de `RestaurantScreen` que está en el backend, en la carpeta `screens/restaurants` dentro de la funcion:
 
 ```JSX
 export default function RestaurantsScreen ({ navigation, route }) {
+```
+
+Y tambien añadir lo siguiente a `RestaurantScreen` que está en el backend, en la carpeta `screens/restaurants` dentro del return de la funcion anterior detrás del `FlatList`
+
+```JSX
+<DeleteModal
+  isVisible={restaurantToBeDeleted !== null}
+  onCancel={() => setRestaurantToBeDeleted(null)}
+  onConfirm={() => removeRestaurant(restaurantToBeDeleted)}>
+    <TextRegular>The products of this restaurant will be deleted as well</TextRegular>
+    <TextRegular>If the restaurant has orders, it cannot be deleted.</TextRegular>
+</DeleteModal>
+
+<DeleteModal
+  isVisible={restaurantToBePromoted !== null}
+  onCancel={() => setRestaurantToBePromoted(null)}
+  onConfirm={() => promoteRestaurant(restaurantToBeDeleted)}>
+    <TextRegular>The products of this restaurant will be promoted as well</TextRegular>
+    <TextRegular>If the restaurant has orders, it cannot be promoted.</TextRegular>
+</DeleteModal>
 ```
