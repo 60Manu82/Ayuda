@@ -40,237 +40,236 @@ const RestaurantController = {
 }
 ```
 
-To this end you can include the following `Pressable` instances in the renderRestaurant function of `RestaurantScreen`:
+Añadir lo siguiente a `create-restaurant` que está en el backend, en la carpeta `database/migrations`
+
+```JSX
+promoted: {
+        allowNull: false,
+        type: Sequelize.BOOLEAN,
+        defaultValue: false
+      },
+```
+
+Debajo de 
+
+```JSX
+updatedAt: {
+        allowNull: false,
+        type: Sequelize.DATE,
+        defaultValue: new Date()
+      },
+```
+
+
+La carpeta `database/seeders` son para agregar datos a nuestra base de datos.
+
+
+Añadir lo siguiente a `create-restaurant` que está en el backend, en la carpeta `database/migrations`
+
+```JSX
+promoted: {
+        allowNull: false,
+        type: Sequelize.BOOLEAN,
+        defaultValue: false
+      },
+```
+
+
+Añadir lo siguiente a `RestaurantMiddleware` que está en el backend, en la carpeta `middlewares`
+
+```JSX
+const checkNoOtherPromoted = async (req, res, next) => {
+  try {
+    const prom = req.body.promoted
+    const isPromoted = prom ? req.body.promoted : false
+    const otherPromotedRestaurant = await Restaurant.findOne({
+      where: {
+        promoted: true
+      }
+    })
+    if (otherPromotedRestaurant && isPromoted) {
+      return res.status(422).send('There is already some promoted restaurant')
+    }
+    return next()
+  } catch (error) {
+    return res.status(500).send(error)
+  }
+}
+```
+
+
+Añadir lo siguiente a `Restaurant` que está en el backend, en la carpeta `models`
+
+```JSX
+promoted: {
+        allowNull: false,
+        type: Sequelize.BOOLEAN,
+        defaultValue: false
+      }
+```
+
+Debajo de 
+
+```JSX
+updatedAt: {
+        allowNull: false,
+        type: Sequelize.DATE,
+        defaultValue: new Date()
+      },
+```
+
+
+Añadir lo siguiente a `RestaurantRoute` que está en el backend, en la carpeta `routes`
+
+```JSX
+RestaurantMiddleware.checkNoOtherPromoted,
+```
+
+En la funcion `loadFileRoutes`
+
+```JSX
+const loadFileRoutes = function (app) {
+  app.route('/restaurants')
+    .get(
+      RestaurantController.index)
+    .post(
+      isLoggedIn,
+      hasRole('owner'),
+      handleFilesUpload(['logo', 'heroImage'], process.env.RESTAURANTS_FOLDER),
+      RestaurantValidation.create,
+      handleValidation,
+
+      RestaurantMiddleware.checkNoOtherPromoted,
+
+      RestaurantController.create)
+```
+
+Y tambien añadir lo siguiente a `RestaurantRoute` que está en el backend, en la carpeta `routes`
+
+```JSX
+app.route('/restaurants/:restaurantId/promote')
+    .patch(
+      isLoggedIn,
+      hasRole('owner'),
+      checkEntityExists(Restaurant, 'restaurantId'),
+      RestaurantMiddleware.checkRestaurantOwnership,
+      RestaurantController.promote
+    )
+```
+
+
+
+# 2. Frontend
+
+
+Añadir lo siguiente a `RestaurantEndpoints` que está en el frontend, en la carpeta `api`
+
+```JSX
+patch
+
+import { get, post, destroy, put, patch } from './helpers/ApiRequestsHelper'
+
+function promote (id) {
+  return patch(`restaurants/${id}/promote`)
+}
+
+promote
+export { getAll, getDetail, getRestaurantCategories, create, remove, update, promote }
+```
+
+
+
+Añadir lo siguiente a `RestaurantEndpoints` que está en el frontend, en la carpeta `api`
+
+```JSX
+<TextRegular>Is it promoted?</TextRegular>
+            <Switch
+                trackColor={{ false: GlobalStyles.brandSecondary, true: GlobalStyles.brandPrimary }}
+                thumbColor={values.promote ? GlobalStyles.brandSecondary : '#f4f3f4'}
+                // onValueChange={toggleSwitch}
+                value={values.promote}
+                style={styles.switch}
+                onValueChange={value =>
+                  setFieldValue('promote', value)
+                }
+              />
+```
+
+
+
+Añadir lo siguiente a `RestaurantScreen` que está en el frontend, en la carpeta `screens/restaurants`
 
 ```JSX
 <Pressable
-  onPress={() => console.log(`Edit pressed for restaurantId = ${item.id}`)}
-  style={({ pressed }) => [
-    {
-      backgroundColor: pressed
-        ? GlobalStyles.brandBlueTap
-        : GlobalStyles.brandBlue
-    },
-    styles.actionButton
-  ]}>
-  <View style={[{ flex: 1, flexDirection: 'row', justifyContent: 'center' }]}>
-    <MaterialCommunityIcons name='pencil' color={'white'} size={20}/>
-    <TextRegular textStyle={styles.text}>
-      Edit
-    </TextRegular>
-  </View>
-</Pressable>
-
-<Pressable
-  onPress={() => console.log(`Delete pressed for restaurantId = ${item.id}`)}
-  style={({ pressed }) => [
-    {
-      backgroundColor: pressed
-        ? GlobalStyles.brandPrimaryTap
-        : GlobalStyles.brandPrimary
-    },
-    styles.actionButton
-  ]}>
-  <View style={[{ flex: 1, flexDirection: 'row', justifyContent: 'center' }]}>
-    <MaterialCommunityIcons name='delete' color={'white'} size={20}/>
-    <TextRegular textStyle={styles.text}>
-      Delete
-    </TextRegular>
-  </View>
-</Pressable>
+            onPress={() => { setRestaurantToBePromoted(item) }}
+            style={({ pressed }) => [
+              {
+                backgroundColor: pressed
+                  ? GlobalStyles.brandGreenTap
+                  : GlobalStyles.brandSuccess
+              },
+              styles.actionButton
+            ]}>
+            <View style={[{ flex: 1, flexDirection: 'row', justifyContent: 'center' }]}>
+              <MaterialCommunityIcons name='star' color={'white'} size={20}/>
+              <TextRegular textStyle={styles.text}>
+                Promote
+              </TextRegular>
+            </View>
+          </Pressable>
 ```
 
-You can try both buttons and check that messages are printed in the console.
-
-# 2. Delete Modal and HTTP DELETE Request for removing Restaurants.
-
-We need to implement the delete action when the user press the corresponding button.
-
-1. Include a remove function in the `src/api/RestaurantEndpoints.js` file. The functions receives the restaurantID and is in charge of doing the request to the corresponding endpoint. You can use the following implementation:
-
-   ```Javascript
-   function remove (id) {
-     return destroy(`restaurants/${id}`)
-   }
-   ```
-
-1. Implement the needed elements in `RestaurantsScreen.js`. It is a good practice to ask for confirmation when performing undoable operations.
-
-   To this end, you have been provided with a component named `DeleteModal`. This component opens a modal window that includes:
-
-   - a button to cancel the operation
-   - a button to confirm the operation
-   - the elements passed as children of this component are rendered as the body of the modal window.
-
-   Therefore, `DeleteModal` component needs three properties:
-
-   - `isVisible`: a boolean expression that is evaluated to show or hide the modal window.
-   - `onCancel`: the function that will be run when the user presses on the cancel button.
-   - `onConfirm`: the function that will be run when the user presses the confirmation button.
-
-1. The component should be included in the return sentence of the `RestaurantsScreen` as follows:
-
-   ```JSX
-   <DeleteModal
-     isVisible={restaurantToBeDeleted !== null}
-     onCancel={() => setRestaurantToBeDeleted(null)}
-     onConfirm={() => removeRestaurant(restaurantToBeDeleted)}>
-       <TextRegular>The products of this restaurant will be deleted as well</TextRegular>
-       <TextRegular>If the restaurant has orders, it cannot be deleted.</TextRegular>
-   </DeleteModal>
-   ```
-
-1. Notice that we need to include a state object to store the restaurant that would be deleted when the user presses the delete button. Include the following state:
-
-   ```Javascript
-   const [restaurantToBeDeleted, setRestaurantToBeDeleted] = useState(null)
-   ```
-
-1. Next, we will change the `onPress` property of the delete `Pressable` previously included in the `renderRestaurant`, so when the user presses, the `restaurantToBeDeleted` state will be set with the rendered restaurant.
-
-   ```JSX
-   onPress={() => { setRestaurantToBeDeleted(item) }}
-   ```
-
-1. Finally, we need to implement the `removeRestaurant` function that is called when the user confirms the deletion. This function calls to the `remove` method of the `RestaurantEndpoints`, then refreshes the view by fetching all the restaurants again and reset the restaurantToBeDeleted state object.
-
-   ```Javascript
-   const removeRestaurant = async (restaurant) => {
-     try {
-       await remove(restaurant.id)
-       await fetchRestaurants()
-       setRestaurantToBeDeleted(null)
-       showMessage({
-         message: `Restaurant ${restaurant.name} succesfully removed`,
-         type: 'success',
-         style: GlobalStyles.flashStyle,
-         titleStyle: GlobalStyles.flashTextStyle
-       })
-     } catch (error) {
-       console.log(error)
-       setRestaurantToBeDeleted(null)
-       showMessage({
-         message: `Restaurant ${restaurant.name} could not be removed.`,
-         type: 'error',
-         style: GlobalStyles.flashStyle,
-         titleStyle: GlobalStyles.flashTextStyle
-       })
-     }
-   }
-   ```
-
-Please, check that restaurants are deleted after this implementation is done.
-
-# 3. Edit Form and HTTP PUT Request for editing Restaurants.
-
-We need to implement the update action when the user press the corresponding button. To this end, we will complete the implementation of the `EditRestaurantScreen.js`. This component should:
-
-- receive the `restaurantId` to be edited as a route param `route.params.id`
-- fetch the details of that restaurant from backend.
-- store the fetched restaurant in a state object
-- update the initialRestaurantValues of the form
-- when the user presses the button labelled with edit, validates the data and eventually send an HTTP PUT Request to the backend.
-- if the update is successful, sends the user back to the `RestaurantsScreen.js`
-
-Let's complete the implementation:
-
-1. Include an update function in the `src/api/RestaurantEndpoints.js` file. The functions receives the restaurantID and the updated restaurant data, and is in charge of doing the request to the corresponding endpoint. You can use the following implementation:
-
-   ```Javascript
-   function update (id, data) {
-     return put(`restaurants/${id}`, data)
-   }
-   ```
-
-1. Modify the `onPress` action of the Edit `Pressable` at the `renderRestaurant`of the `RestaurantsScreen.js` component to navigate to this edit screen including the id of the restaurant. You can use the following:
-
-   ```JSX
-   onPress={() => navigation.navigate('EditRestaurantScreen', { id: item.id })}
-   ```
-
-1. At the `EditRestaurantScreen` import the `update` function from `RestaurantEndpoints`. Next, include state objects to store the restaurant to be fetched and the initialValues for the `Formik` edit form.
-
-   ```Javascript
-   const [restaurant, setRestaurant] = useState({})
-
-   const [initialRestaurantValues, setInitialRestaurantValues] = useState({ name: null, description: null, address: null, postalCode: null, url: null, shippingCosts: null, email: null, phone: null, restaurantCategoryId: null, logo: null, heroImage: null })
-   ```
-
-1. Include an effect that fetches the restaurant details and set the `restaurant` state object and the `initialRestaurantValues`. You can use the following implementation:
-
-   ```Javascript
-   useEffect(() => {
-     async function fetchRestaurantDetail () {
-       try {
-         const fetchedRestaurant = await getDetail(route.params.id)
-         const preparedRestaurant = prepareEntityImages(fetchedRestaurant, ['logo', 'heroImage'])
-         setRestaurant(preparedRestaurant)
-         const initialValues = buildInitialValues(preparedRestaurant, initialRestaurantValues)
-         setInitialRestaurantValues(initialValues)
-       } catch (error) {
-         showMessage({
-           message: `There was an error while retrieving restaurant details (id ${route.params.id}). ${error}`,
-           type: 'error',
-           style: GlobalStyles.flashStyle,
-           titleStyle: GlobalStyles.flashTextStyle
-         })
-       }
-     }
-     fetchRestaurantDetail()
-   }, [route])
-   ```
-
-   Notice that we have to perform some processing of the entity data. We will use a couple of functions:
-
-   - `prepareEntityImages`: receives an entity and an array of fieldNames that include images and returns the entity including the images in a form that can be rendered by `ImagePickers`.
-   - `buildInitialValues`: receives an entity and return an object of initialValues valid for the `Formik` component.
-
-1. Include the function to be run when the user presses on the submit/save button at the end of the form:
-
-   ```Javascript
-   const updateRestaurant = async (values) => {
-     setBackendErrors([])
-     try {
-       const updatedRestaurant = await update(restaurant.id, values)
-       showMessage({
-         message: `Restaurant ${updatedRestaurant.name} succesfully updated`,
-         type: 'success',
-         style: GlobalStyles.flashStyle,
-         titleStyle: GlobalStyles.flashTextStyle
-       })
-       navigation.navigate('RestaurantsScreen', { dirty: true })
-     } catch (error) {
-       console.log(error)
-       setBackendErrors(error.errors)
-     }
-   }
-   ```
-
-   Notice that after the restaurant is update, we navigate back the the `RestaurantsScreen` that will re-render the restaurants list.
-
-1. Update the `Formik` component with these properties:
-
-   ```JSX
-   enableReinitialize
-   initialValues={initialRestaurantValues}
-   onSubmit={updateRestaurant}
-   ```
-
-   The `enableReinitialize` property forces `Formik` to check for changes in the `intialRestaurantValues` assigned to the `initialValues` property.
-
-# 4. Implement Edit and Delete of Products
-
-Follow the steps of the previous exercices to implement the Edit and Deletion of products from the `RestaurantDetailScreen.js`.
-
-You will need to include the `EditProductScreen` in the `RestaurantsStack.js` as follows:
+Debajo de 
 
 ```JSX
-<Stack.Screen
-  name='EditProductScreen'
-  component={EditProductScreen}
-  options={{
-    title: 'Edit Product'
-  }} />
+<Pressable
+            onPress={() => { setRestaurantToBeDeleted(item) }}
+            style={({ pressed }) => [
+              {
+                backgroundColor: pressed
+                  ? GlobalStyles.brandPrimaryTap
+                  : GlobalStyles.brandPrimary
+              },
+              styles.actionButton
+            ]}>
+            <View style={[{ flex: 1, flexDirection: 'row', justifyContent: 'center' }]}>
+              <MaterialCommunityIcons name='delete' color={'white'} size={20}/>
+              <TextRegular textStyle={styles.text}>
+                Delete
+              </TextRegular>
+            </View>
+          </Pressable>
 ```
 
-Remember that the backend does not expect to receive the restaurantId of the product, since you cannot change the product from one restaurant to another.
+
+Y tambien añadir lo siguiente a `RestaurantRoute` que está en el backend, en la carpeta `routes`
+
+```JSX
+const promoteRestaurant = async (restaurant) => {
+    try {
+      await promote(restaurant.id)
+      await fetchRestaurants()
+      setRestaurantToBePromoted(null)
+      showMessage({
+        message: `Restaurant ${restaurant.name} succesfully promoted`,
+        type: 'success',
+        style: GlobalStyles.flashStyle,
+        titleStyle: GlobalStyles.flashTextStyle
+      })
+    } catch (error) {
+      setRestaurantToBePromoted(null)
+      showMessage({
+        message: `Restaurant ${restaurant.name} could not be promoted.`,
+        type: 'error',
+        style: GlobalStyles.flashStyle,
+        titleStyle: GlobalStyles.flashTextStyle
+      })
+    }
+  }
+```
+
+Todo esto dentro de `RestaurantRoute` que está en el backend, en la carpeta `routes` dentro de la funcion:
+
+```JSX
+export default function RestaurantsScreen ({ navigation, route }) {
+```
