@@ -1,4 +1,4 @@
-import { get, post } from './helpers/ApiRequestsHelper'
+import { get, post, patch } from './helpers/ApiRequestsHelper'
 function getAll () {
   return get('users/myrestaurants')
 }
@@ -15,4 +15,8 @@ function create (data) {
   return post('restaurants', data)
 }
 
-export { getAll, getDetail, getRestaurantCategories, create }
+function promote (id) {
+  return patch(`restaurants/${id}/promote`)
+}
+
+export { getAll, getDetail, getRestaurantCategories, create, promote }
