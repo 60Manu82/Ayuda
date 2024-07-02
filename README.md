@@ -203,6 +203,11 @@ Añadir lo siguiente a `RestaurantScreen` que está en el frontend, en la carpet
 const [restaurantToBePromoted, setRestaurantToBePromoted] = useState(null)
 
 
+{item.promoted &&
+          <TextSemiBold textStyle={styles.promoted }>ON PROMOTION</TextSemiBold>
+        }
+
+
 <Pressable
             onPress={() => { setRestaurantToBePromoted(item) }}
             style={({ pressed }) => [
