@@ -200,6 +200,9 @@ Añadir lo siguiente a `CreateRestaurant` que está en el frontend, en la carpet
 Añadir lo siguiente a `RestaurantScreen` que está en el frontend, en la carpeta `screens/restaurants`
 
 ```JSX
+const [restaurantToBePromoted, setRestaurantToBePromoted] = useState(null)
+
+
 <Pressable
             onPress={() => { setRestaurantToBePromoted(item) }}
             style={({ pressed }) => [
@@ -242,7 +245,7 @@ Debajo de
 ```
 
 
-Y tambien añadir lo siguiente a `RestaurantRoute` que está en el backend, en la carpeta `routes`
+Y tambien añadir lo siguiente a `RestaurantScreen` que está en el backend, en la carpeta `screens/restaurants`
 
 ```JSX
 const promoteRestaurant = async (restaurant) => {
