@@ -19,8 +19,18 @@ const loadFileRoutes = function (app) {
       handleFilesUpload(['logo', 'heroImage'], process.env.RESTAURANTS_FOLDER),
       RestaurantValidation.create,
       handleValidation,
+      RestaurantMiddleware.checkNoOtherPromoted,
       RestaurantController.create)
 
+  app.route('/restaurants/:restaurantId/promote')
+    .patch(
+      isLoggedIn,
+      hasRole('owner'),
+      checkEntityExists(Restaurant, 'restaurantId'),
+      RestaurantMiddleware.checkRestaurantOwnership,
+      RestaurantController.promote
+    )
+  
   app.route('/restaurants/:restaurantId')
     .get(
       checkEntityExists(Restaurant, 'restaurantId'),
